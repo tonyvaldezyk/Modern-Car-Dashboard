@@ -24,6 +24,36 @@ const checkToken = (req, res, next) => {
   next();
 };
 
+// Rafraîchissement automatique du token
+async function refreshAccessToken() {
+  try {
+    const data = await spotifyApi.refreshAccessToken();
+    accessToken = data.body['access_token'];
+    spotifyApi.setAccessToken(accessToken);
+    return true;
+  } catch (error) {
+    console.error('Erreur refresh token:', error);
+    return false;
+  }
+}
+
+// Fonction pour gérer la gestion des routes Spotify
+async function handleSpotifyAction(action) {
+  try {
+    const result = await action();
+    return result.body;
+  } catch (error) {
+    if (error.statusCode === 401) {
+      if (await refreshAccessToken()) {
+        const result = await action();
+        return result.body;
+      }
+      throw { status: 401, message: 'Token expiré' };
+    }
+    throw { status: error.statusCode || 500, message: error.message };
+  }
+}
+
 // Route de base pour tester la connexion au serveur
 app.get('/', (req, res) => {
   res.send('Serveur en marche !');
@@ -69,26 +99,20 @@ app.get('/callback', async (req, res) => {
 // Route pour obtenir les informations du profil utilisateur
 app.get('/me', checkToken, async (req, res) => {
   try {
-    const result = await spotifyApi.getMe();
-    res.json(result.body);
+    const data = await handleSpotifyAction(() => spotifyApi.getMe());
+    res.json(data);
   } catch (error) {
-    res.status(401).json({
-      message: 'Non autorisé',
-      error: error.message
-    });
+    res.status(error.status).json({ message: error.message });
   }
 });
 
 // Route pour obtenir les playlists de l'utilisateur
 app.get('/playlists', checkToken, async (req, res) => {
   try {
-    const result = await spotifyApi.getUserPlaylists();
-    res.json(result.body);
+    const data = await handleSpotifyAction(() => spotifyApi.getUserPlaylists());
+    res.json(data);
   } catch (error) {
-    res.status(401).json({
-      message: 'Non autorisé',
-      error: error.message
-    });
+    res.status(error.status).json({ message: error.message });
   }
 });
 
