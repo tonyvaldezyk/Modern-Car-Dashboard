@@ -1,22 +1,20 @@
 # Progression du Projet Spotify Dashboard
 
-## ✅ Fonctionnalités Implémentées
+## Fonctionnalités Actives ✅
+- [x] Connexion Spotify (/login)
+- [x] Récupération profil (/me)
+- [x] Récupération playlists (/playlists)
+- [x] Rafraîchissement automatique du token
+- [x] Gestion centralisée des routes avec handleSpotifyAction
+- [x] Contrôles de lecture :
+  - [x] Play/Pause
+  - [x] Navigation (suivant/précédent)
+  - [x] Volume
+  - [x] Position dans la piste
+- [x] Recherche et bibliothèque
+- [x] Lecture aléatoire
 
-### Authentication
-- [x] Connexion à Spotify (`/login`)
-- [x] Gestion du callback Spotify (`/callback`)
-- [x] Protection des routes avec middleware
-- [x] Stockage du token d'accès
-
-### Endpoints API
-- [x] Récupération du profil utilisateur (`/me`)
-- [x] Récupération des playlists (`/playlists`)
-
-## 🚧 En Cours d'Implémentation
-- [ ] Rafraîchissement automatique du token
+## Prochaines Étapes 🚧
+- [ ] Interface utilisateur
 - [ ] Gestion des erreurs améliorée
-
-## 📝 Fonctionnalités Prévues
-- [ ] Recherche de chansons
-- [ ] Lecture en cours
-- [ ] Top artistes/chansons
+- [ ] Tests des fonctionnalités

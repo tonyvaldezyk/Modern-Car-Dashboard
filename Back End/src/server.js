@@ -1,11 +1,14 @@
 // Importation des packages nécessaires
 const express = require('express');
 const SpotifyWebApi = require('spotify-web-api-node');
+const bodyParser = require('body-parser');
 let accessToken = null;
 require('dotenv').config();
 
 // Création de l'application Express
 const app = express();
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 // Configuration de Spotify
 const spotifyApi = new SpotifyWebApi({
@@ -64,7 +67,16 @@ app.get('/login', (req, res) => {
   const scopes = [
     'user-read-private',
     'user-read-email',
-    'user-library-read'
+    'user-library-read',
+    'user-library-modify',      
+    'user-read-playback-state', 
+    'user-modify-playback-state', 
+    'playlist-read-private',    
+    'playlist-read-collaborative', 
+    'user-read-recently-played', 
+    'user-top-read',           
+    'user-follow-read',
+    'streaming' 
   ];
   const url = spotifyApi.createAuthorizeURL(scopes);
   res.redirect(url);
@@ -115,6 +127,161 @@ app.get('/playlists', checkToken, async (req, res) => {
     res.status(error.status).json({ message: error.message });
   }
 });
+
+// Récupérer les playlists récemment jouées
+app.get('/home/recent', checkToken, async (req, res) => {
+  try {
+    const data = await handleSpotifyAction(() => spotifyApi.getMyRecentlyPlayedTracks());
+    res.json(data);
+  } catch (error) {
+    res.status(error.status).json({ message: error.message });
+  }
+});
+
+// Récupérer les mix personnalisés
+app.get('/home/featured', checkToken, async (req, res) => {
+  try {
+    const data = await handleSpotifyAction(() => spotifyApi.getFeaturedPlaylists());
+    res.json(data);
+  } catch (error) {
+    res.status(error.status).json({ message: error.message });
+  }
+});
+
+// Top artistes et titres
+app.get('/home/top/:type', checkToken, async (req, res) => {
+  try {
+    const data = await handleSpotifyAction(() => 
+      spotifyApi.getMyTop(req.params.type)); // type peut être 'tracks' ou 'artists'
+    res.json(data);
+  } catch (error) {
+    res.status(error.status).json({ message: error.message });
+  }
+});
+
+// Recherche de chansons et artistes
+app.get('/search', checkToken, async (req, res) => {
+  try {
+    const { q, type } = req.query; // type peut être 'track,album,artist,playlist'
+    const data = await handleSpotifyAction(() => 
+      spotifyApi.search(q, type.split(','))
+    );
+    res.json(data);
+  } catch (error) {
+    res.status(error.status).json({ message: error.message });
+  }
+});
+
+// Obtenir les titres likés
+app.get('/library/tracks', checkToken, async (req, res) => {
+  try {
+    const data = await handleSpotifyAction(() => spotifyApi.getMySavedTracks());
+    res.json(data);
+  } catch (error) {
+    res.status(error.status).json({ message: error.message });
+  }
+});
+
+// Ajouter/Retirer des favoris
+app.post('/library/tracks', checkToken, async (req, res) => {
+  try {
+    const { trackId, action } = req.body;
+    const data = await handleSpotifyAction(() => 
+      action === 'add' 
+        ? spotifyApi.addToMySavedTracks([trackId])
+        : spotifyApi.removeFromMySavedTracks([trackId])
+    );
+    res.json(data);
+  } catch (error) {
+    res.status(error.status).json({ message: error.message });
+  }
+});
+
+////GESTION DE LA LECTURE////
+
+// Lecture aléatoire
+app.put('/player/shuffle', checkToken, async (req, res) => {
+  try {
+    const { state } = req.body; // true ou false
+    const data = await handleSpotifyAction(() => spotifyApi.setShuffle(state));
+    res.json(data);
+  } catch (error) {
+    res.status(error.status).json({ message: error.message });
+  }
+});
+
+// État de lecture actuel (incluant shuffle)
+app.get('/player/state', checkToken, async (req, res) => {
+  try {
+    const data = await handleSpotifyAction(() => spotifyApi.getMyCurrentPlaybackState());
+    res.json(data);
+  } catch (error) {
+    res.status(error.status).json({ message: error.message });
+  }
+});
+
+////CONTRÔLES DE LECTURE////
+
+// Play/Pause
+app.put('/player/play', checkToken, async (req, res) => {
+  try {
+    const data = await handleSpotifyAction(() => spotifyApi.play());
+    res.json(data);
+  } catch (error) {
+    res.status(error.status).json({ message: error.message });
+  }
+});
+
+app.put('/player/pause', checkToken, async (req, res) => {
+  try {
+    const data = await handleSpotifyAction(() => spotifyApi.pause());
+    res.json(data);
+  } catch (error) {
+    res.status(error.status).json({ message: error.message });
+  }
+});
+
+// Navigation
+app.post('/player/next', checkToken, async (req, res) => {
+  try {
+    const data = await handleSpotifyAction(() => spotifyApi.skipToNext());
+    res.json(data);
+  } catch (error) {
+    res.status(error.status).json({ message: error.message });
+  }
+});
+
+app.post('/player/previous', checkToken, async (req, res) => {
+  try {
+    const data = await handleSpotifyAction(() => spotifyApi.skipToPrevious());
+    res.json(data);
+  } catch (error) {
+    res.status(error.status).json({ message: error.message });
+  }
+});
+
+// Position et Volume
+app.put('/player/seek', checkToken, async (req, res) => {
+  try {
+    const { position_ms } = req.body;
+    const data = await handleSpotifyAction(() => spotifyApi.seek(position_ms));
+    res.json(data);
+  } catch (error) {
+    res.status(error.status).json({ message: error.message });
+  }
+});
+
+app.put('/player/volume', checkToken, async (req, res) => {
+  try {
+    const { volume_percent } = req.body;
+    const data = await handleSpotifyAction(() => spotifyApi.setVolume(volume_percent));
+    res.json(data);
+  } catch (error) {
+    res.status(error.status).json({ message: error.message });
+  }
+});
+
+
 
 // Démarrage du serveur
 const PORT = 8888;
