@@ -159,16 +159,66 @@ app.get('/home/top/:type', checkToken, async (req, res) => {
   }
 });
 
-// Recherche de chansons et artistes
+// Recherche
 app.get('/search', checkToken, async (req, res) => {
   try {
-    const { q, type } = req.query; // type peut être 'track,album,artist,playlist'
+    const { q, type = 'track,artist,album,playlist,show,episode', limit = 20 } = req.query;
+    
+    if (!q) {
+      return res.status(400).json({ message: 'Terme de recherche requis' });
+    }
+
+    console.log('Recherche avec:', { q, type, limit });
+
     const data = await handleSpotifyAction(() => 
-      spotifyApi.search(q, type.split(','))
+      spotifyApi.search(q, type.split(','), { limit: parseInt(limit) })
     );
-    res.json(data);
+
+    console.log('Réponse Spotify brute:', data);
+
+    // Vérification plus précise de la réponse
+    if (!data || typeof data !== 'object') {
+      return res.status(500).json({ message: 'Réponse Spotify invalide' });
+    }
+
+    // Transformation des clés de recherche
+    const searchTypes = type.split(',').map(t => t + 's');
+    const response = {};
+
+    // Parcours des types de recherche demandés
+    searchTypes.forEach(searchType => {
+      const items = data[searchType]?.items;
+      if (items && Array.isArray(items)) {
+        response[searchType] = items.filter(item => item !== null).map(item => ({
+          id: item.id,
+          name: item.name,
+          uri: item.uri,
+          ...(searchType === 'tracks' && {
+            artist: item.artists?.[0]?.name,
+            duration: item.duration_ms
+          }),
+          ...(searchType === 'shows' && {
+            publisher: item.publisher
+          }),
+          ...(searchType === 'episodes' && {
+            show: item.show?.name,
+            duration: item.duration_ms
+          })
+        }));
+      }
+    });
+
+    // Calcul du total uniquement si nous avons des résultats
+    response.total = Object.values(response).reduce((sum, array) => 
+      sum + (Array.isArray(array) ? array.length : 0), 0
+    );
+
+    console.log('Réponse finale:', response);
+
+    res.json(response);
   } catch (error) {
-    res.status(error.status).json({ message: error.message });
+    console.error('Erreur de recherche:', error);
+    res.status(500).json({ message: error.message });
   }
 });
 

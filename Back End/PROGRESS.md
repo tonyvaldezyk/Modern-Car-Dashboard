@@ -15,6 +15,34 @@
 - [x] Lecture aléatoire
 
 ## Prochaines Étapes 🚧
-- [ ] Interface utilisateur
+
+### Backend
+- [ ] Tests des routes API :
+  - [ ] Test authentification (/login, /callback)
+  - [ ] Test récupération profil (/me)
+  - [ ] Test récupération playlists (/playlists)
+- [ ] Tests des contrôles de lecture :
+  - [ ] Test recherche de musiques
+  - [ ] Test lecture/pause
+  - [ ] Test navigation (suivant/précédent)
+  - [ ] Test contrôle du volume
+  - [ ] Test position dans la piste
+  - [ ] Test lecture aléatoire
 - [ ] Gestion des erreurs améliorée
-- [ ] Tests des fonctionnalités
+- [ ] Documentation API complète
+
+### Frontend
+- [ ] Interface utilisateur :
+  - [ ] Design du dashboard
+  - [ ] Page de connexion
+  - [ ] Page d'accueil avec playlists
+  - [ ] Barre de recherche
+  - [ ] Lecteur audio avec contrôles
+- [ ] Composants de lecture :
+  - [ ] Boutons play/pause
+  - [ ] Boutons suivant/précédent
+  - [ ] Contrôle du volume
+  - [ ] Barre de progression
+  - [ ] Toggle lecture aléatoire
+- [ ] Tests interface utilisateur
+- [ ] Design responsive
