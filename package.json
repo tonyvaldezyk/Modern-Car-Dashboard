@@ -1,9 +1,12 @@
 {
   "dependencies": {
+    "@abandonware/noble": "^1.9.2-25",
+    "bluetooth-node": "^1.0.3",
     "body-parser": "^1.20.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "serialport": "^13.0.0",
     "web-bluetooth": "^0.1.2"
   }
 }

@@ -17,19 +17,19 @@
 ## Prochaines Étapes 🚧
 
 ### Backend
-- [ ] Tests des routes API :
-  - [ ] Test authentification (/login, /callback)
-  - [ ] Test récupération profil (/me)
-  - [ ] Test récupération playlists (/playlists)
-- [ ] Tests des contrôles de lecture :
-  - [ ] Test recherche de musiques
-  - [ ] Test lecture/pause
-  - [ ] Test navigation (suivant/précédent)
-  - [ ] Test contrôle du volume
-  - [ ] Test position dans la piste
-  - [ ] Test lecture aléatoire
-- [ ] Gestion des erreurs améliorée
-- [ ] Documentation API complète
+- [x] Tests des routes API :
+  - [x] Test authentification (/login, /callback)
+  - [x] Test récupération profil (/me)
+  - [x] Test récupération playlists (/playlists)
+- [x] Tests des contrôles de lecture :
+  - [x] Test recherche de musiques
+  - [x] Test lecture/pause
+  - [x] Test navigation (suivant/précédent)
+  - [x] Test contrôle du volume
+  - [x] Test position dans la piste
+  - [x] Test lecture aléatoire
+- [x] Gestion des erreurs améliorée
+- [x] Documentation API complète
 
 ### Frontend
 - [ ] Interface utilisateur :
