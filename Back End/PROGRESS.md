@@ -1,48 +1,51 @@
-# Progression du Projet Spotify Dashboard
+# Checklist de mise en place de l'application multimédia
 
-## Fonctionnalités Actives ✅
-- [x] Connexion Spotify (/login)
-- [x] Récupération profil (/me)
-- [x] Récupération playlists (/playlists)
-- [x] Rafraîchissement automatique du token
-- [x] Gestion centralisée des routes avec handleSpotifyAction
-- [x] Contrôles de lecture :
-  - [x] Play/Pause
-  - [x] Navigation (suivant/précédent)
-  - [x] Volume
-  - [x] Position dans la piste
-- [x] Recherche et bibliothèque
-- [x] Lecture aléatoire
+## 1. Configuration de l'environnement
+- [ ] Installer PHP et Composer pour Symfony.
+- [ ] Installer Node.js et npm pour le développement front-end.
+- [ ] Installer une base de données (MySQL, PostgreSQL, etc.) et configurer l'accès.
 
-## Prochaines Étapes 🚧
+## 2. Création du projet Symfony
+- [ ] Créer un nouveau projet Symfony.
+- [ ] Configurer la connexion à la base de données dans le fichier `.env`.
+- [ ] Créer les entités nécessaires pour les utilisateurs, playlists, morceaux, etc.
+- [ ] Exécuter les migrations pour créer les tables dans la base de données.
 
-### Backend
-- [x] Tests des routes API :
-  - [x] Test authentification (/login, /callback)
-  - [x] Test récupération profil (/me)
-  - [x] Test récupération playlists (/playlists)
-- [x] Tests des contrôles de lecture :
-  - [x] Test recherche de musiques
-  - [x] Test lecture/pause
-  - [x] Test navigation (suivant/précédent)
-  - [x] Test contrôle du volume
-  - [x] Test position dans la piste
-  - [x] Test lecture aléatoire
-- [x] Gestion des erreurs améliorée
-- [x] Documentation API complète
+## 3. Développement de l'API avec Symfony
+- [ ] Créer des contrôleurs pour gérer les requêtes API (utilisateurs, playlists, morceaux).
+- [ ] Configurer les routes pour l'API.
+- [ ] Implémenter la logique pour interagir avec la base de données via Doctrine.
+- [ ] Tester les endpoints de l'API avec un outil comme Postman ou Thunder Client.
 
-### Frontend
-- [ ] Interface utilisateur :
-  - [ ] Design du dashboard
-  - [ ] Page de connexion
-  - [ ] Page d'accueil avec playlists
-  - [ ] Barre de recherche
-  - [ ] Lecteur audio avec contrôles
-- [ ] Composants de lecture :
-  - [ ] Boutons play/pause
-  - [ ] Boutons suivant/précédent
-  - [ ] Contrôle du volume
-  - [ ] Barre de progression
-  - [ ] Toggle lecture aléatoire
-- [ ] Tests interface utilisateur
-- [ ] Design responsive
+## 4. Configuration du projet TypeScript
+- [ ] Créer un nouveau projet TypeScript pour le front-end.
+- [ ] Installer un framework front-end (React, Angular, etc.) avec TypeScript.
+- [ ] Configurer le projet pour utiliser TypeScript.
+
+## 5. Développement du front-end
+- [ ] Créer des composants pour l'interface utilisateur (lecteur audio, gestion des playlists, etc.).
+- [ ] Implémenter la logique pour interagir avec l'API Symfony (requêtes fetch ou Axios).
+- [ ] Ajouter des fonctionnalités multimédias (lecture de musique, vidéos).
+- [ ] Créer une interface utilisateur réactive et attrayante.
+
+## 6. Intégration de l'API Spotify
+- [ ] Configurer l'API Spotify pour l'authentification des utilisateurs.
+- [ ] Ajouter des fonctionnalités pour lire de la musique, gérer des playlists, etc.
+- [ ] Tester l'intégration de l'API Spotify.
+
+## 7. Ajout de fonctionnalités intéressantes
+- [ ] Implémenter la recherche de musique via l'API Spotify.
+- [ ] Ajouter des visualisations audio.
+- [ ] Intégrer des podcasts.
+- [ ] Mettre en place un système de notifications.
+- [ ] Offrir un mode hors ligne pour la musique.
+
+## 8. Tests et déploiement
+- [ ] Effectuer des tests unitaires et fonctionnels pour l'API et le front-end.
+- [ ] Préparer le déploiement de l'application sur un serveur.
+- [ ] Configurer le serveur web (Nginx, Apache) pour l'application Symfony.
+- [ ] Déployer le front-end sur le même serveur ou sur un serveur séparé.
+
+## 9. Maintenance et améliorations
+- [ ] Recueillir les retours des utilisateurs pour améliorer l'application.
+- [ ] Planifier des mises à jour régulières pour ajouter de nouvelles fonctionnalités.

@@ -1,173 +1,153 @@
 const express = require('express');
-const app = express();
-const noble = require('@abandonware/noble');
+const { createBluetooth } = require('node-ble');
 const cors = require('cors');
-const PORT = 8889;
-require('dotenv').config();
 
-// Middleware
+const app = express();
+const PORT = 8889;
+
 app.use(cors());
 app.use(express.json());
 
-class BluetoothApi {
+// Définition des UUIDs des services
+const MEDIA_SERVICE_UUID = '1111';
+const CALL_SERVICE_UUID = '1112';
+
+class BluetoothPeripheral {
     constructor() {
-        this.isScanning = false;
-        this.discoveredDevices = new Map();
+        this.isAdvertising = false;
         this.connectedDevice = null;
-        this.isConnected = false;  
-        
-        // Configuration des événements Bluetooth
-        noble.on('stateChange', (state) => {
-            console.log('État Bluetooth:', state);
-        });
-
-        noble.on('discover', (peripheral) => {
-            const device = {
-                id: peripheral.id,
-                name: peripheral.advertisement.localName || 'Inconnu'
-            };
-            this.discoveredDevices.set(peripheral.id, device);
-            console.log('Appareil découvert:', device.name);
-        });
+        this.bluetooth = null;
+        this.adapter = null;
+        this.initializeBluetooth();
     }
 
-    async scanDevices() {
-        if (this.isScanning) {
-            throw new Error('Le scan est déjà en cours');
-        }
-
-        if (noble.state !== 'poweredOn') {
-            throw new Error('Bluetooth non disponible. État actuel: ' + noble.state);
-        }
-
-        this.isScanning = true;
-        this.discoveredDevices.clear();
-        console.log('Démarrage du scan...');
-
-        return new Promise((resolve, reject) => {
-            try {
-                noble.startScanning([], true);
-
-                setTimeout(async () => {
-                    await noble.stopScanningAsync();
-                    this.isScanning = false;
-                    console.log('Scan terminé');
-                    resolve(Array.from(this.discoveredDevices.values()));
-                }, 20000);
-            } catch (error) {
-                this.isScanning = false;
-                reject(error);
+    async initializeBluetooth() {
+        try {
+            console.log('Initialisation du Bluetooth...');
+            this.bluetooth = await createBluetooth();
+            
+            // Obtention de l'adaptateur
+            this.adapter = await this.bluetooth.defaultAdapter();
+            if (!this.adapter) {
+                throw new Error('Pas d\'adaptateur Bluetooth trouvé');
             }
-        });
+
+            // Activation de l'adaptateur s'il n'est pas déjà activé
+            if (!await this.adapter.isDiscoverable()) {
+                await this.adapter.setDiscoverable(true);
+            }
+
+            console.log('Bluetooth initialisé avec succès');
+            this.startAdvertising();
+        } catch (error) {
+            console.error('Erreur d\'initialisation Bluetooth:', error);
+        }
     }
 
-    // Device connection
-    async connectToDevice(deviceId) {
-        if (this.isConnected) {
-            throw new Error('Déjà connecté à un appareil');
+    async startAdvertising() {
+        try {
+            if (!this.adapter) {
+                throw new Error('Adaptateur Bluetooth non initialisé');
+            }
+
+            // Configuration des services
+            const gattServer = await this.adapter.gattServer();
+            
+            // Service Média
+            const mediaService = await gattServer.createService(MEDIA_SERVICE_UUID);
+            const mediaCharacteristic = await mediaService.createCharacteristic(
+                '1111',
+                ['read', 'write', 'notify']
+            );
+
+            // Service Appel
+            const callService = await gattServer.createService(CALL_SERVICE_UUID);
+            const callCharacteristic = await callService.createCharacteristic(
+                '1112',
+                ['read', 'write', 'notify']
+            );
+
+            // Démarrage de l'advertising
+            await this.adapter.startAdvertising({
+                name: 'Car Dashboard',
+                serviceUuids: [MEDIA_SERVICE_UUID, CALL_SERVICE_UUID]
+            });
+
+            this.isAdvertising = true;
+            console.log('Advertising démarré');
+
+            // Gestion des connexions
+            this.adapter.on('device', async (device) => {
+                console.log('Nouvel appareil détecté:', await device.getName());
+                this.connectedDevice = {
+                    name: await device.getName(),
+                    address: await device.getAddress()
+                };
+            });
+
+        } catch (error) {
+            console.error('Erreur lors du démarrage de l\'advertising:', error);
+            throw error;
         }
+    }
 
-        const peripheral = await noble.peripheralAsync(deviceId);
-        if (!peripheral) {
-            throw new Error('Appareil non trouvé');
+    async stopAdvertising() {
+        try {
+            if (this.adapter) {
+                await this.adapter.stopAdvertising();
+                this.isAdvertising = false;
+                console.log('Advertising arrêté');
+            }
+        } catch (error) {
+            console.error('Erreur lors de l\'arrêt de l\'advertising:', error);
+            throw error;
         }
+    }
 
-        console.log('Tentative de connexion...');
-        await peripheral.connectAsync();
-        console.log('Connecté à:', peripheral.advertisement.localName);
-
-        // services discovery
-        const services = await peripheral.discoverServicesAsync([]);
-        console.log('Services découverts:', services.length);
-
-        this.connectedDevice = peripheral;
-        this.isConnected = true;
-
+    getStatus() {
         return {
-            id: peripheral.id,
-            name: peripheral.advertisement.localName,
-            services: services.map(service => ({
-                uuid: service.uuid,
-                type: this.getServiceType(service.uuid)
-            }))
+            isAdvertising: this.isAdvertising,
+            connectedDevice: this.connectedDevice,
+            adapterAvailable: !!this.adapter
         };
     }
-
-    getServiceType(uuid) {  
-        // UUIDs standard Bluetooth pour différents services
-        const serviceTypes = {
-            '110a': 'Media',
-            '1130': 'Phonebook',
-            '111e': 'Handsfree',
-            '111f': 'Audio Gateway'
-        };
-        
-        return serviceTypes[uuid] || 'Unknown';
-    }
-
 }
-// Instance creation
-const bluetoothManager = new BluetoothApi();
 
-// Route racine
-app.get('/', (req, res) => {
-    res.json({ 
-        message: 'Bienvenue sur l\'API Bluetooth',
-        endpoints: {
-            test: '/test',
-            scan: '/scan'
-        }
-    });
+// Création de l'instance du gestionnaire Bluetooth
+const bluetoothManager = new BluetoothPeripheral();
+
+// Routes API
+app.get('/api/bluetooth/status', (req, res) => {
+    res.json(bluetoothManager.getStatus());
 });
 
-// Route de test
-app.get('/test', (req, res) => {
-    res.json({ 
-        message: 'API Bluetooth opérationnelle',
-        bluetoothState: noble.state 
-    });
-});
-
-// Scan route
-app.get('/scan', async (req, res) => {
+app.post('/api/bluetooth/advertise/start', async (req, res) => {
     try {
-        const devices = await bluetoothManager.scanDevices();
-        res.json({
-            success: true,
-            deviceCount: devices.length,
-            devices: devices
-        });
+        await bluetoothManager.startAdvertising();
+        res.json({ success: true, message: 'Advertising démarré' });
     } catch (error) {
-        res.status(500).json({
-            success: false,
+        res.status(500).json({ 
+            success: false, 
             error: error.message,
-            bluetoothState: noble.state
+            message: 'Erreur lors du démarrage de l\'advertising'
         });
     }
 });
 
-// Route de connexion
-app.post('/connect/:deviceId', async (req, res) => {
+app.post('/api/bluetooth/advertise/stop', async (req, res) => {
     try {
-        const deviceId = req.params.deviceId;
-        const connectionInfo = await bluetoothManager.connectToDevice(deviceId);
-        res.json({
-            success: true,
-            message: 'Connecté avec succès',
-            device: connectionInfo
-        });
+        await bluetoothManager.stopAdvertising();
+        res.json({ success: true, message: 'Advertising arrêté' });
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            error: error.message
+        res.status(500).json({ 
+            success: false, 
+            error: error.message,
+            message: 'Erreur lors de l\'arrêt de l\'advertising'
         });
     }
 });
 
 // Démarrage du serveur
 app.listen(PORT, () => {
-    console.log(`API Bluetooth en écoute sur http://localhost:${PORT}`);
-    console.log(`État Bluetooth initial: ${noble.state}`);
+    console.log(`Serveur Bluetooth démarré sur http://localhost:${PORT}`);
 });
-
-

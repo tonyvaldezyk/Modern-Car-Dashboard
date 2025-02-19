@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Car Dashboard Bluetooth</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        #status {
+            margin: 20px 0;
+            padding: 10px;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <h1>Car Dashboard Bluetooth</h1>
+    <button id="connectBtn">Connecter un appareil</button>
+    <button id="disconnectBtn" disabled>Déconnecter</button>
+    <div id="status">État : Non connecté</div>
+
+    <script>
+        let device = null;
+
+        async function connectToDevice() {
+            try {
+                device = await navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true,
+                    optionalServices: ['1111', '1112'] // Services média et appel
+                });
+
+                const server = await device.gatt.connect();
+                document.getElementById('status').textContent = `État : Connecté à ${device.name}`;
+                document.getElementById('connectBtn').disabled = true;
+                document.getElementById('disconnectBtn').disabled = false;
+
+                // Gestion de la déconnexion
+                device.addEventListener('gattserverdisconnected', onDisconnected);
+
+                // Configuration des services
+                await setupMediaService(server);
+                await setupCallService(server);
+
+            } catch (error) {
+                console.error('Erreur de connexion:', error);
+                document.getElementById('status').textContent = `Erreur : ${error.message}`;
+            }
+        }
+
+        async function setupMediaService(server) {
+            try {
+                const service = await server.getPrimaryService('1111');
+                const characteristic = await service.getCharacteristic('1111');
+                
+                // Écoute des notifications
+                await characteristic.startNotifications();
+                characteristic.addEventListener('characteristicvaluechanged', event => {
+                    const value = new TextDecoder().decode(event.target.value);
+                    console.log('Média mis à jour:', value);
+                });
+            } catch (error) {
+                console.error('Erreur service média:', error);
+            }
+        }
+
+        async function setupCallService(server) {
+            try {
+                const service = await server.getPrimaryService('1112');
+                const characteristic = await service.getCharacteristic('1112');
+                
+                // Écoute des notifications
+                await characteristic.startNotifications();
+                characteristic.addEventListener('characteristicvaluechanged', event => {
+                    const value = new TextDecoder().decode(event.target.value);
+                    console.log('Appel mis à jour:', value);
+                });
+            } catch (error) {
+                console.error('Erreur service appel:', error);
+            }
+        }
+
+        function onDisconnected() {
+            document.getElementById('status').textContent = 'État : Déconnecté';
+            document.getElementById('connectBtn').disabled = false;
+            document.getElementById('disconnectBtn').disabled = true;
+            device = null;
+        }
+
+        async function disconnect() {
+            if (device) {
+                await device.gatt.disconnect();
+                onDisconnected();
+            }
+        }
+
+        // Event listeners
+        document.getElementById('connectBtn').addEventListener('click', connectToDevice);
+        document.getElementById('disconnectBtn').addEventListener('click', disconnect);
+    </script>
+</body>
+</html>

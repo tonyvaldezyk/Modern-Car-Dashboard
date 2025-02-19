@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "@abandonware/noble": "^1.9.2-25",
+    "bleno": "^0.5.0",
     "bluetooth-node": "^1.0.3",
     "body-parser": "^1.20.3",
     "cors": "^2.8.5",
